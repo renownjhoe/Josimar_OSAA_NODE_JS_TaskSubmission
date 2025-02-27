@@ -1,0 +1,2 @@
+# Josimar_OSAA_NODE_JS_TaskSubmission
+ The purpose of this enhanced Node.js test task is to rigorously evaluate your technical expertise in backend development, security protocol integration, and API design for an authentication-based system. Recognizing the potential for external assistance or shortcuts, we have introduced Counter-Proofing measures designed to highlight your original problem-solving skills, reinforce accountability, and ensure the submission reflects your genuine capabilities.

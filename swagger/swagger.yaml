@@ -1,11 +1,403 @@
 openapi: 3.0.0
 info:
-  title: Starbic Authentication System
+  title: Starbic Authentication System (SAS)
   version: 1.0.0
+  description: |
+    Secure authentication system with MFA and RBAC
+servers:
+  - url: http://localhost:3000
+    description: Development server
+tags:
+  - name: Authentication
+    description: User registration and authentication
+  - name: OTP
+    description: Multi-Factor Authentication operations
+  - name: Admin
+    description: Admin-only endpoints
+
 paths:
-  /health:
-    get:
-      summary: Service health check
+  /api/auth/register:
+    post:
+      tags: [Authentication]
+      summary: Register new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegistrationRequest'
+      responses:
+        '201':
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegistrationResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '409':
+          $ref: '#/components/responses/ConflictError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/auth/login:
+    post:
+      tags: [Authentication]
+      summary: Initiate user login
+      parameters:
+        - $ref: '#/components/parameters/RateLimitHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
       responses:
         '200':
-          description: Service status information
+          description: OTP sent for verification
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '429':
+          $ref: '#/components/responses/RateLimitError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/auth/verify-otp:
+    post:
+      tags: [OTP]
+      summary: Verify OTP code
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OTPVerificationRequest'
+      responses:
+        '200':
+          description: OTP verified successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /health:
+    get:
+      tags: [System]
+      summary: System health check
+      responses:
+        '200':
+          description: Service status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthCheckResponse'
+
+  /api/auth/admin/users:
+    get:
+      tags: [Admin]
+      summary: Get all users (Admin only)
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of users
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  count:
+                    type: integer
+                    example: 10
+                  users:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/UserResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+  /api/auth/user/profile:
+    get:
+      tags: [User]
+      summary: Get user profile
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: User profile details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  user:
+                    $ref: '#/components/schemas/UserResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/ServerError'  
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    RegistrationRequest:
+      type: object
+      required:
+        - username
+        - passcode
+        - phone
+      properties:
+        username:
+          type: string
+          example: john_doe
+        passcode:
+          type: string
+          format: password
+          example: Secure@123
+          pattern: ^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$
+        phone:
+          type: string
+          example: +1234567890
+        dateOfBirth:
+          type: string
+          format: date
+          example: 2000-01-01
+        referralCode:
+          type: string
+          example: REF123
+        role:
+          type: string
+          enum: [user, admin]
+          default: user
+
+    RegistrationResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: OTP sent to your phone
+        userId:
+          type: string
+          example: 507f1f77bcf86cd799439011
+
+    LoginRequest:
+      type: object
+      required:
+        - username
+        - passcode
+      properties:
+        username:
+          type: string
+          example: john_doe
+        passcode:
+          type: string
+          format: password
+          example: Secure@123
+
+    LoginResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: OTP sent for verification
+        userId:
+          type: string
+          example: 507f1f77bcf86cd799439011
+        expiresAt:
+          type: string
+          format: date-time
+
+    OTPVerificationRequest:
+      type: object
+      required:
+        - userId
+        - code
+      properties:
+        userId:
+          type: string
+          example: 507f1f77bcf86cd799439011
+        code:
+          type: string
+          pattern: ^\d{6}$
+          example: "123456"
+
+    TokenResponse:
+      type: object
+      properties:
+        token:
+          type: string
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        userId:
+          type: string
+          example: 507f1f77bcf86cd799439011
+        role:
+          type: string
+          example: user
+        expiresIn:
+          type: integer
+          example: 900
+
+    HealthCheckResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: OK
+        timestamp:
+          type: string
+          format: date-time
+        dbStatus:
+          type: string
+          example: Connected
+
+    UserResponse:
+      type: object
+      properties:
+        userId:
+          type: string
+          example: 507f1f77bcf86cd799439011
+        username:
+          type: string
+          example: john_doe
+        phone:
+          type: string
+          example: +1234567890
+        role:
+          type: string
+          example: user
+        dateOfBirth:
+          type: string
+          format: date
+          example: 2000-01-01
+        referralCode:
+          type: string
+          example: REF123
+        createdAt:
+          type: string
+          format: date-time
+          example: 2025-02-27T16:03:49.000Z
+
+  responses:
+    ValidationError:
+      description: Invalid request parameters
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: false
+              message:
+                type: string
+                example: Validation failed
+              errors:
+                type: array
+                items:
+                  type: string
+
+    ConflictError:
+      description: Resource already exists
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: false
+              message:
+                type: string
+                example: Username or phone already exists
+
+    UnauthorizedError:
+      description: Authentication failed
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: false
+              message:
+                type: string
+                example: Invalid credentials
+
+    ForbiddenError:
+      description: Insufficient permissions
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: false
+              message:
+                type: string
+                example: Access denied
+
+    RateLimitError:
+      description: Too many requests
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: false
+              message:
+                type: string
+                example: Too many login attempts. Try again later.
+
+    ServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: false
+              message:
+                type: string
+                example: Internal server error
+
+  parameters:
+    RateLimitHeader:
+      in: header
+      name: X-RateLimit-Limit
+      schema:
+        type: integer
+        example: 5
+      description: Maximum allowed requests per hour

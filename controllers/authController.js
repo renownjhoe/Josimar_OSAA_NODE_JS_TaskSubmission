@@ -5,6 +5,15 @@ import { OTP } from '../models/OTP.js';
 import logger from '../utils/logger.js';
 import { v4 as uuidv4 } from 'uuid';
 import { toObjectId } from '../utils/mongooseUtils.js';
+import { 
+  ValidationError, 
+  UnauthorizedError, 
+  ForbiddenError,
+  ConflictError, 
+  NotFoundError,
+  InternalServerError 
+} from '../utils/errorHandler.js';
+
 
 
 // Helper function to generate 6-digit OTP
@@ -15,15 +24,20 @@ const generateOTP = () => {
 };
 
 
-export const registerUser = async (req, res) => {
+
+export const registerUser = async (req, res, next) => {
   try {
-    const { username, passcode, phone, dateOfBirth, referralCode } = req.body;
+    const { username, passcode, role = 'user', phone, dateOfBirth, referralCode } = req.body;
 
     // Duplicate check
     const existingUser = await User.findOne({ $or: [{ username }, { phone }] });
     if (existingUser) {
-      logger.warn(`Duplicate registration attempt: ${username}`);
-      return res.status(409).json({ error: 'Username or phone already exists' });
+      throw new ConflictError('Username or phone already exists');
+    }
+
+    // Validate role
+    if (role && !['user', 'admin'].includes(role)) {
+      throw new ValidationError('Invalid role. Allowed values: user, admin');
     }
 
     // Hash passcode
@@ -37,7 +51,7 @@ export const registerUser = async (req, res) => {
       dateOfBirth,
       referralCode,
       uuid: uuidv4(),
-      role: 'user'
+      role
     });
 
     // Generate and store OTP
@@ -54,13 +68,13 @@ export const registerUser = async (req, res) => {
     logger.info(`User registered: ${user.username} (${user._id})`);
 
     res.status(201).json({ 
+      success: true,
       message: 'OTP sent to your phone',
       userId: user._id
     });
 
   } catch (error) {
-    logger.error(`Registration error: ${error.message}`);
-    res.status(500).json({ error: 'Registration failed' });
+    next(error); // Pass to centralized error handler
   }
 };
 
@@ -71,15 +85,13 @@ export const loginUser = async (req, res) => {
     // Find user
     const user = await User.findOne({ username });
     if (!user) {
-      logger.warn(`Login attempt for non-existent user: ${username}`);
-      return res.status(401).json({ error: 'Invalid credentials' });
+      throw new UnauthorizedError('Invalid credentials');
     }
 
     // Verify passcode
     const isValidPasscode = bcrypt.compare(passcode, user.passcode);
     if (!isValidPasscode) {
-      logger.warn(`Invalid passcode for user: ${username}`);
-      return res.status(401).json({ error: 'Invalid credentials' });
+      throw new UnauthorizedError('Invalid credentials');
     }
 
     // Generate and store OTP
@@ -102,41 +114,37 @@ export const loginUser = async (req, res) => {
     });
 
   } catch (error) {
-    logger.error(`Login error: ${error.message}`);
-    res.status(500).json({ error: 'Login failed' });
+    next(error); // Pass to errorHandler
   }
 };
 
-export const verifyOTP = async (req, res) => {
+export const verifyOTP = async (req, res, next) => {
   try {
     const { userId, code } = req.body;
 
-    // 2. Convert userId to ObjectId
+    // Convert and validate user ID
     const userObjectId = toObjectId(userId);
 
-    // 3. Find the latest valid OTP
+    // Find valid OTP
     const otpRecord = await OTP.findOne({
       userId: userObjectId,
       expiresAt: { $gt: new Date() }
     }).sort({ createdAt: -1 });
 
-    // 4. Verify OTP exists and matches
     if (!otpRecord) {
-      logger.warn(`No valid OTP found for user: ${userId}`);
-      return res.status(401).json({ error: 'OTP expired' });
+      throw new NotFoundError('OTP expired or not found');
     }
 
     const isValid = await bcrypt.compare(code, otpRecord.code);
     if (!isValid) {
-      logger.warn(`Invalid OTP attempt for user: ${userId}`);
       await OTP.deleteMany({ userId: userObjectId });
-      return res.status(401).json({ error: 'Invalid OTP' });
+      throw new UnauthorizedError('Invalid OTP code');
     }
 
-    // 5. Cleanup OTP records
+    // Cleanup OTP records
     await OTP.deleteMany({ userId: userObjectId });
 
-    // 6. Generate JWT
+    // Generate JWT
     const user = await User.findById(userObjectId);
     const token = jwt.sign(
       {
@@ -151,6 +159,7 @@ export const verifyOTP = async (req, res) => {
     logger.info(`Successful OTP verification for ${user.username}`);
     
     res.json({
+      success: true,
       token,
       userId: user._id,
       role: user.role,
@@ -158,10 +167,16 @@ export const verifyOTP = async (req, res) => {
     });
 
   } catch (error) {
-    logger.error(`OTP verification failed: ${error.message}`);
-    if (error.message.includes('Invalid MongoDB ObjectId')) {
-      return res.status(400).json({ error: 'Invalid user ID format' });
+    // Handle specific error types
+    if (error.name === 'ValidationError') {
+      error.message = 'Invalid user ID format'; // Customize message
     }
-    res.status(500).json({ error: 'OTP verification failed' });
+    
+    // For custom errors, just pass through
+    if (!error.statusCode) {
+      error = new InternalServerError('OTP verification failed');
+    }
+    
+    next(error);
   }
 };

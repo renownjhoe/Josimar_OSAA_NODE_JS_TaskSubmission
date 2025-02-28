@@ -7,8 +7,25 @@ const userSchema = new mongoose.Schema({
   uuid: { type: String, default: uuidv4 },
   role: { type: String, enum: ['user', 'admin'], default: 'user' },
   phone: String,
-  createdAt: { type: Date, default: Date.now }
+  createdAt: { type: Date, default: Date.now },
+  telegramUsername: {
+    type: String,
+    unique: true,
+    match: /^@?[a-zA-Z0-9_]{5,32}$/
+  }
 });
+
+userSchema.methods.generateAuthToken = function() {
+  return jwt.sign(
+    {
+      userId: this._id,
+      role: this.role,
+      uuid: this.uuid
+    },
+    process.env.JWT_SECRET,
+    { expiresIn: '15m' }
+  );
+};
 
 // Named export
 export const User = mongoose.model('User', userSchema);

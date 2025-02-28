@@ -13,17 +13,8 @@ import {
   NotFoundError,
   InternalServerError 
 } from '../utils/errorHandler.js';
-
-
-
-// Helper function to generate 6-digit OTP
-const generateOTP = () => {
-  const otp = Math.floor(100000 + Math.random() * 900000).toString();
-  console.log('Generated OTP:', otp); // Debug log
-  return otp;
-};
-
-
+import { sendOTP, verifyOTP as verifyOTPService } from '../services/otpService.js';
+import { sendWhatsAppToken } from '../services/whatsapppService.js';
 
 export const registerUser = async (req, res, next) => {
   try {
@@ -32,18 +23,18 @@ export const registerUser = async (req, res, next) => {
     // Duplicate check
     const existingUser = await User.findOne({ $or: [{ username }, { phone }] });
     if (existingUser) {
-      throw new ConflictError('Username or phone already exists');
+      throw new ConflictError('Username or phone already exists', { exposeStack: false });
     }
 
     // Validate role
     if (role && !['user', 'admin'].includes(role)) {
-      throw new ValidationError('Invalid role. Allowed values: user, admin');
+      throw new ValidationError('Invalid role. Allowed values: user, admin', { exposeStack: false });
     }
 
     // Hash passcode
     const hashedPasscode = await bcrypt.hash(passcode, 12);
     
-    // Create user
+    // Create user  
     const user = await User.create({
       username,
       passcode: hashedPasscode,
@@ -54,14 +45,8 @@ export const registerUser = async (req, res, next) => {
       role
     });
 
-    // Generate and store OTP
-    const rawOTP = generateOTP();
-    const hashedOTP = await bcrypt.hash(rawOTP, 8); // Salt rounds 8-12
-    await OTP.create({
-      userId: user._id,
-      code: hashedOTP, // Hash OTP for storage
-      expiresAt: new Date(Date.now() + 5 * 60 * 1000) // 5 minutes
-    });
+    // Send OTP via selected channel
+    // await sendOTP(user, 'whatsapp'); // or 'telegram | whatsapp'
 
     // Simulate OTP delivery
     logger.info(`OTP for ${phone}: ${rawOTP}`);
@@ -85,27 +70,16 @@ export const loginUser = async (req, res) => {
     // Find user
     const user = await User.findOne({ username });
     if (!user) {
-      throw new UnauthorizedError('Invalid credentials');
+      throw new UnauthorizedError('Invalid credentials', { exposeStack: false });
     }
 
     // Verify passcode
     const isValidPasscode = bcrypt.compare(passcode, user.passcode);
     if (!isValidPasscode) {
-      throw new UnauthorizedError('Invalid credentials');
+      throw new UnauthorizedError('Invalid credentials', { exposeStack: false });
     }
 
-    // Generate and store OTP
-    const rawOTP = generateOTP();
-    const hashedOTP = await bcrypt.hash(rawOTP, 8); // Salt rounds 8-12
-    await OTP.create({
-      userId: user._id,
-      code: hashedOTP, // Hash OTP for storage
-      expiresAt: new Date(Date.now() + 5 * 60 * 1000) // 5 minutes
-    });
-
-    // Simulate OTP delivery
-    logger.info(`Login OTP for ${user.phone}: ${rawOTP}`);
-    logger.info(`MFA triggered for user: ${username}`);
+    // await sendOTP(user, 'whatsapp'); // or 'telegram'
 
     res.json({
       message: 'OTP sent for verification',
@@ -125,6 +99,8 @@ export const verifyOTP = async (req, res, next) => {
     // Convert and validate user ID
     const userObjectId = toObjectId(userId);
 
+    await verifyOTPService(userId, code);
+
     // Find valid OTP
     const otpRecord = await OTP.findOne({
       userId: userObjectId,
@@ -132,13 +108,13 @@ export const verifyOTP = async (req, res, next) => {
     }).sort({ createdAt: -1 });
 
     if (!otpRecord) {
-      throw new NotFoundError('OTP expired or not found');
+      throw new NotFoundError('OTP expired or not found', { exposeStack: false });
     }
 
     const isValid = await bcrypt.compare(code, otpRecord.code);
     if (!isValid) {
       await OTP.deleteMany({ userId: userObjectId });
-      throw new UnauthorizedError('Invalid OTP code');
+      throw new UnauthorizedError('Invalid OTP code', { exposeStack: false });
     }
 
     // Cleanup OTP records
@@ -174,7 +150,7 @@ export const verifyOTP = async (req, res, next) => {
     
     // For custom errors, just pass through
     if (!error.statusCode) {
-      error = new InternalServerError('OTP verification failed');
+      error = new InternalServerError('OTP verification failed', { exposeStack: false });
     }
     
     next(error);

@@ -1,4 +1,3 @@
-// routes/adminRoutes.js
 import { Router } from 'express';
 import { getAllUsers } from '../controllers/adminController.js';
 import { requireRole } from '../middleware/rbac.js';

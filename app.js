@@ -4,7 +4,6 @@ import 'dotenv/config';
 // Local imports
 import connectDB from './config/db.js';
 import authRoutes from './routes/authRoutes.js';
-import telegramRoutes from './routes/telegramRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 import systemRoutes from './routes/systemRoutes.js';
@@ -24,7 +23,6 @@ app.use(express.urlencoded({ extended: true }));
 
 // Application routes
 app.use('/api/auth', authRoutes);
-app.use('/api/auth/telegram', telegramRoutes);
 app.use('/api/auth/admin', adminRoutes);
 app.use('/api/auth/user', userRoutes);
 

@@ -1,4 +1,3 @@
-// middleware/rbac.js
 import logger from '../utils/logger.js';
 import { UnauthorizedError, ForbiddenError } from '../utils/errorHandler.js';
 

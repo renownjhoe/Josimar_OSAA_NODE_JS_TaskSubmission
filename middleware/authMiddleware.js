@@ -1,4 +1,3 @@
-// middleware/authMiddleware.js
 import jwt from 'jsonwebtoken';
 import { User } from '../models/User.js';
 import { UnauthorizedError } from '../utils/errorHandler.js';

@@ -1,4 +1,3 @@
-// routes/userRoutes.js
 import { Router } from 'express';
 import { getProfile } from '../controllers/userController.js';
 import { authenticateUser } from '../middleware/authMiddleware.js';

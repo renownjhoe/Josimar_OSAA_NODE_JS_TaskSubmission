@@ -1,0 +1,218 @@
+{
+	"info": {
+		"_postman_id": "ea56e821-8f70-4fd3-a834-cda2ae97e58c",
+		"name": "Starbic Authentication System",
+		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json",
+		"_exporter_id": "9842008",
+		"_collection_link": "https://bold-meteor-60857.postman.co/workspace/Simplifix~5fdcd261-f700-40a7-b995-c5af60ac104d/collection/9842008-ea56e821-8f70-4fd3-a834-cda2ae97e58c?action=share&source=collection_link&creator=9842008"
+	},
+	"item": [
+		{
+			"name": "Authentication",
+			"item": [
+				{
+					"name": "Telegram Registration",
+					"item": [
+						{
+							"name": "Register",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"phone\": \"+2348070814814\",\r\n  \"username\": \"dafe_george\",\r\n  \"passcode\": \"Secure@123\",\r\n  \"telegramUsername\": \"@DaGeeker\",\r\n  \"role\": \"user\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": "{{base_url}}/api/auth/telegram/register"
+							},
+							"response": []
+						},
+						{
+							"name": "Verify OTP",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"phone\": \"+1234567890\",\r\n  \"code\": \"123456\",\r\n  \"username\": \"telegram_user\",\r\n  \"telegramUsername\": \"tg_username\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": "{{base_url}}/api/auth/verify/telegram"
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Register User",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"username\": \"dafe\",\r\n    \"passcode\": \"Secure@123\",\r\n    \"phone\": \"+1234567891\",\r\n    \"role\": \"admin\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "{{base_url}}/api/auth/register"
+					},
+					"response": []
+				},
+				{
+					"name": "Login User",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n\"username\": \"testuser\",\r\n \"passcode\": \"Secure@123\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "{{base_url}}/api/auth/login"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "OTP",
+			"item": [
+				{
+					"name": "Verify OTP",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"userId\": \"67c1373ac42b52cd639e412f\",\r\n    \"code\": \"950774\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "{{base_url}}/api/auth/verify-otp"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "User",
+			"item": [
+				{
+					"name": "Get User Profile",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": {
+								"token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2N2MwOTM0ZWU0ZTliM2IzMTkyZWJhNjAiLCJyb2xlIjoidXNlciIsInV1aWQiOiJmZjk4MzEwMi1lOWQ0LTQyZDQtOWY1Mi0zYjI1ODViNGE2NTYiLCJpYXQiOjE3NDA3MTQ3MzMsImV4cCI6MTc0MDcxNTYzM30.9JvO2ROYwx14Kx1jsEDimtDafe-TAILqsi_jXa5tCSA"
+							}
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{user_token}}"
+							}
+						],
+						"url": "{{base_url}}/api/auth/user/profile"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Admin",
+			"item": [
+				{
+					"name": "Get All Users",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": {
+								"token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2N2MxMzczYWM0MmI1MmNkNjM5ZTQxMmYiLCJyb2xlIjoiYWRtaW4iLCJ1dWlkIjoiMTM5ODRiZjUtNzE2YS00ZWIzLWJlY2ItYWYxYzBmODdhYjQzIiwiaWF0IjoxNzQwNzE1OTMwLCJleHAiOjE3NDA3MTY4MzB9.n5sy0y6UPbFrrP4wt6s4llKp-8jEWGpuFjHnrOUlhDQ"
+							}
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{admin_token}}"
+							}
+						],
+						"url": "{{base_url}}/api/auth/admin/users"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "System",
+			"item": [
+				{
+					"name": "Health Check",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": "{{base_url}}/health"
+					},
+					"response": []
+				},
+				{
+					"name": "API Documentation",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": "{{base_url}}/api-docs"
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"console.log('Running pre-request script');"
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:3000"
+		},
+		{
+			"key": "user_id",
+			"value": "REPLACE_WITH_REGISTRATION_RESPONSE_ID"
+		},
+		{
+			"key": "user_token",
+			"value": "REPLACE_WITH_VERIFIED_USER_TOKEN"
+		},
+		{
+			"key": "admin_token",
+			"value": "REPLACE_WITH_ADMIN_USER_TOKEN"
+		}
+	]
+}

@@ -11,6 +11,7 @@ const userSchema = new mongoose.Schema({
   telegramUsername: {
     type: String,
     unique: true,
+    sparse: true,
     match: /^@?[a-zA-Z0-9_]{5,32}$/
   }
 });

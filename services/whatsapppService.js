@@ -6,7 +6,7 @@ export const sendWhatsAppToken = async (user, channel) => {
 
     const client = twilio(process.env.SERVICE_SID, process.env.AUTH_TOKEN);
 
-  const verification = await client.verify.v2
+  const verification = await client.verify.v2 
     .services(process.env.SERVICE_SID)
     .verifications.create({
       channel: "whatsapp",

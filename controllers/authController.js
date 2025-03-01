@@ -14,7 +14,6 @@ import {
   InternalServerError 
 } from '../utils/errorHandler.js';
 import { sendOTP, verifyOTP as verifyOTPService } from '../services/otpService.js';
-import { sendWhatsAppToken } from '../services/whatsapppService.js';
 
 export const registerUser = async (req, res, next) => {
   try {
@@ -23,12 +22,12 @@ export const registerUser = async (req, res, next) => {
     // Duplicate check
     const existingUser = await User.findOne({ $or: [{ username }, { phone }] });
     if (existingUser) {
-      throw new ConflictError('Username or phone already exists', { exposeStack: false });
+      throw new ConflictError('Username or phone already exists');
     }
 
     // Validate role
     if (role && !['user', 'admin'].includes(role)) {
-      throw new ValidationError('Invalid role. Allowed values: user, admin', { exposeStack: false });
+      throw new ValidationError('Invalid role. Allowed values: user, admin');
     }
 
     // Hash passcode
@@ -46,11 +45,7 @@ export const registerUser = async (req, res, next) => {
     });
 
     // Send OTP via selected channel
-    // await sendOTP(user, 'whatsapp'); // or 'telegram | whatsapp'
-
-    // Simulate OTP delivery
-    logger.info(`OTP for ${phone}: ${rawOTP}`);
-    logger.info(`User registered: ${user.username} (${user._id})`);
+    await sendOTP(user, 'whatsapp'); // or 'telegram | whatsapp'
 
     res.status(201).json({ 
       success: true,
@@ -70,16 +65,16 @@ export const loginUser = async (req, res) => {
     // Find user
     const user = await User.findOne({ username });
     if (!user) {
-      throw new UnauthorizedError('Invalid credentials', { exposeStack: false });
+      throw new UnauthorizedError('Invalid credentials');
     }
 
     // Verify passcode
     const isValidPasscode = bcrypt.compare(passcode, user.passcode);
     if (!isValidPasscode) {
-      throw new UnauthorizedError('Invalid credentials', { exposeStack: false });
+      throw new UnauthorizedError('Invalid credentials');
     }
 
-    // await sendOTP(user, 'whatsapp'); // or 'telegram'
+    await sendOTP(user, 'whatsapp'); // or 'telegram'
 
     res.json({
       message: 'OTP sent for verification',
@@ -99,7 +94,7 @@ export const verifyOTP = async (req, res, next) => {
     // Convert and validate user ID
     const userObjectId = toObjectId(userId);
 
-    await verifyOTPService(userId, code);
+    // await verifyOTPService(userId, code);
 
     // Find valid OTP
     const otpRecord = await OTP.findOne({
@@ -108,13 +103,13 @@ export const verifyOTP = async (req, res, next) => {
     }).sort({ createdAt: -1 });
 
     if (!otpRecord) {
-      throw new NotFoundError('OTP expired or not found', { exposeStack: false });
+      throw new NotFoundError('OTP expired or not found');
     }
 
-    const isValid = await bcrypt.compare(code, otpRecord.code);
+    const isValid = bcrypt.compare(code, otpRecord.code);
     if (!isValid) {
       await OTP.deleteMany({ userId: userObjectId });
-      throw new UnauthorizedError('Invalid OTP code', { exposeStack: false });
+      throw new UnauthorizedError('Invalid OTP code');
     }
 
     // Cleanup OTP records
@@ -150,7 +145,7 @@ export const verifyOTP = async (req, res, next) => {
     
     // For custom errors, just pass through
     if (!error.statusCode) {
-      error = new InternalServerError('OTP verification failed', { exposeStack: false });
+      error = new InternalServerError('OTP verification failed');
     }
     
     next(error);

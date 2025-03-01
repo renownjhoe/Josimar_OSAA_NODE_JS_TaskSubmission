@@ -46,7 +46,7 @@ export const registerUser = async (req, res, next) => {
     });
 
     // Send OTP via selected channel
-    // await sendOTP(user, 'whatsapp'); // or 'telegram | whatsapp'
+    await sendOTP(user, 'whatsapp'); // or 'telegram | whatsapp'
 
     // Simulate OTP delivery
     logger.info(`OTP for ${phone}: ${rawOTP}`);

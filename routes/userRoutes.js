@@ -6,6 +6,7 @@ import { requireRole } from '../middleware/rbac.js';
 const router = Router();
 
 // User-only route
+//get user profile
 router.get('/profile', authenticateUser, requireRole('user'), getProfile);
 
 export default router;

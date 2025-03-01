@@ -7,6 +7,7 @@ import { authenticateUser } from '../middleware/authMiddleware.js';
 const router = Router();
 
 // Admin-only route
+//get all registered users
 router.get('/users', authenticateUser, requireRole('admin'), getAllUsers);
 
 export default router;

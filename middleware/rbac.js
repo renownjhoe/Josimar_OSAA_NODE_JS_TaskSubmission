@@ -11,7 +11,7 @@ export const requireRole = (requiredRole) => {
       logger.info(`Role check for ${req.user.username}: ${req.user.role} vs required ${requiredRole}`);
       
       if (req.user.role !== requiredRole) {
-        throw new ForbiddenError('Insufficient permissions');
+        throw new ForbiddenError('Insufficient permissions/Forbidden');
       }
 
       next();

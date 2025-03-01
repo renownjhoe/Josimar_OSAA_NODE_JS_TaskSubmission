@@ -11,10 +11,13 @@ import logger from '../utils/logger.js';
 
 export const sendOTP = async (user, channel) => {
   try {
+
+    //Check if channel is valid
     if (!['whatsapp', 'telegram'].includes(channel)) {
       return ValidationError('Invalid OTP channel specified');
     }
 
+    //generates OTP
     const rawOTP = generateOTP();
     const hashedOTP = await bcrypt.hash(rawOTP, 8);
 

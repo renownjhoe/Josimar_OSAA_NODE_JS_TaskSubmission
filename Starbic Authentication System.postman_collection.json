@@ -1,56 +1,15 @@
 {
 	"info": {
-		"_postman_id": "ea56e821-8f70-4fd3-a834-cda2ae97e58c",
+		"_postman_id": "b2c8d8ff-1dc4-46d5-b8bb-b662127fa92f",
 		"name": "Starbic Authentication System",
 		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json",
-		"_exporter_id": "9842008",
-		"_collection_link": "https://bold-meteor-60857.postman.co/workspace/Simplifix~5fdcd261-f700-40a7-b995-c5af60ac104d/collection/9842008-ea56e821-8f70-4fd3-a834-cda2ae97e58c?action=share&source=collection_link&creator=9842008"
+		"_exporter_id": "38369463",
+		"_collection_link": "https://blue-firefly-638392.postman.co/workspace/T-One-Workspace~8b3be8c0-5f43-4dbd-bc5e-87841bf3c552/collection/38369463-b2c8d8ff-1dc4-46d5-b8bb-b662127fa92f?action=share&source=collection_link&creator=38369463"
 	},
 	"item": [
 		{
 			"name": "Authentication",
 			"item": [
-				{
-					"name": "Telegram Registration",
-					"item": [
-						{
-							"name": "Register",
-							"request": {
-								"method": "POST",
-								"header": [],
-								"body": {
-									"mode": "raw",
-									"raw": "{\r\n  \"phone\": \"+2348070814814\",\r\n  \"username\": \"dafe_george\",\r\n  \"passcode\": \"Secure@123\",\r\n  \"telegramUsername\": \"@DaGeeker\",\r\n  \"role\": \"user\"\r\n}",
-									"options": {
-										"raw": {
-											"language": "json"
-										}
-									}
-								},
-								"url": "{{base_url}}/api/auth/telegram/register"
-							},
-							"response": []
-						},
-						{
-							"name": "Verify OTP",
-							"request": {
-								"method": "POST",
-								"header": [],
-								"body": {
-									"mode": "raw",
-									"raw": "{\r\n  \"phone\": \"+1234567890\",\r\n  \"code\": \"123456\",\r\n  \"username\": \"telegram_user\",\r\n  \"telegramUsername\": \"tg_username\"\r\n}",
-									"options": {
-										"raw": {
-											"language": "json"
-										}
-									}
-								},
-								"url": "{{base_url}}/api/auth/verify/telegram"
-							},
-							"response": []
-						}
-					]
-				},
 				{
 					"name": "Register User",
 					"request": {
@@ -58,7 +17,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"username\": \"dafe\",\r\n    \"passcode\": \"Secure@123\",\r\n    \"phone\": \"+1234567891\",\r\n    \"role\": \"admin\"\r\n}",
+							"raw": "{\r\n    \"username\": \"renownjosimar\",\r\n    \"passcode\": \"Secure@123\",\r\n    \"phone\": \"+2347046433968\",\r\n    \"role\": \"user\"\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -184,6 +143,38 @@
 					"response": []
 				}
 			]
+		},
+		{
+			"name": "SMS NOTIFICATION",
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": {
+						"username": "ACfab3e1a6ce8688c1aba933d10f7d8652",
+						"password": "[AuthToken]"
+					}
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "urlencoded",
+					"urlencoded": [
+						{
+							"key": "To",
+							"value": " 2347046433968",
+							"type": "text"
+						},
+						{
+							"key": "Code",
+							"value": "[Code]",
+							"type": "text"
+						}
+					]
+				},
+				"url": "https://verify.twilio.com/v2/Services/VAcd70403a4dd8ae3944353f4d2247dde2/VerificationCheck",
+				"description": "Generated from cURL: curl 'https://verify.twilio.com/v2/Services/VAcd70403a4dd8ae3944353f4d2247dde2/VerificationCheck' -X POST \\\r\n--data-urlencode 'To=+2347046433968' \\\r\n--data-urlencode 'Code=[Code]' \\\r\n-u ACfab3e1a6ce8688c1aba933d10f7d8652:[AuthToken]\r\n\r\n\r\n\r\n"
+			},
+			"response": []
 		}
 	],
 	"event": [

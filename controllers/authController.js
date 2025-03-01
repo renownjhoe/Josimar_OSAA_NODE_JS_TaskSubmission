@@ -94,8 +94,6 @@ export const verifyOTP = async (req, res, next) => {
     // Convert and validate user ID
     const userObjectId = toObjectId(userId);
 
-    // await verifyOTPService(userId, code);
-
     // Find valid OTP
     const otpRecord = await OTP.findOne({
       userId: userObjectId,
@@ -133,6 +131,7 @@ export const verifyOTP = async (req, res, next) => {
       success: true,
       token,
       userId: user._id,
+      username: user.username,
       role: user.role,
       expiresIn: 900
     });

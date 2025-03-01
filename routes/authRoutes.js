@@ -9,11 +9,12 @@ import {
   validateLogin,
   validateOTPInput
 } from '../validations/authValidations.js';
+import loginLimiter from '../middleware/rateLimiter.js';
 
 const router = Router();
 
 router.post('/register', validateRegistration, registerUser);
-router.post('/login', validateLogin, loginUser); 
+router.post('/login', validateLogin, loginLimiter, loginUser); 
 router.post('/verify-otp', validateOTPInput, verifyOTP);
 
 export default router;

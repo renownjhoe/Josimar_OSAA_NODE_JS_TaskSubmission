@@ -5,63 +5,61 @@ export const errorHandler = (err, req, res, next) => {
 
   const isDevelopment = process.env.NODE_ENV === 'development';
   let statusCode = err.statusCode || 500;
-  let response = {
+  const response = {
     success: false,
     message: 'Something went wrong'
   };
 
-  // Log detailed error information
-  logger.error(`${statusCode} - ${err.message} - ${req.method} ${req.originalUrl} - ${req.ip}`);
+  // Always log full error details
+  logger.error(`${statusCode} - ${err.message} - ${req.method} ${req.originalUrl} - ${req.ip} - ${err.stack}`);
 
   // Handle specific error types
   switch (err.constructor.name) {
     case 'ValidationError':
       statusCode = 400;
-      response.message = isDevelopment ? err.message : err.prodMessage;
-      if (isDevelopment) {
-        response.errors = err.details?.map(e => e.message) || [err.message];
-        response.stack = err.stack;
-      }
+      response.message = isDevelopment ? err.message : 'Invalid request';
+      if (isDevelopment) response.errors = err.details?.map(e => e.message) || [err.message];
       break;
 
     case 'ConflictError':
       statusCode = 409;
-      response.message = isDevelopment ? err.message : err.prodMessage;
-      if (isDevelopment) response.stack = err.stack;
+      response.message = isDevelopment ? err.message : 'Resource conflict occurred';
       break;
 
     case 'UnauthorizedError':
       statusCode = 401;
-      response.message = isDevelopment ? err.message : err.prodMessage;
-      if (isDevelopment) response.stack = err.stack;
+      response.message = isDevelopment ? err.message : 'Invalid credentials';
       break;
 
     case 'ForbiddenError':
       statusCode = 403;
-      response.message = isDevelopment ? err.message : err.prodMessage;
-      if (isDevelopment) response.stack = err.stack;
+      response.message = 'Access denied';
       break;
 
     case 'NotFoundError':
       statusCode = 404;
-      response.message = isDevelopment ? err.message : err.prodMessage;
-      if (isDevelopment) response.stack = err.stack;
+      response.message = 'Resource not found';
       break;
 
     case 'InternalServerError':
     default:
       response.message = isDevelopment ? err.message : 'Internal server error';
-      if (isDevelopment) response.stack = err.stack;
       break;
   }
 
-  // Production cleanup
+  // Development-only properties
+  if (isDevelopment) {
+    response.stack = err.stack;
+  }
+
+  // Production security cleanup
   if (!isDevelopment) {
+    // Remove sensitive error information
     delete response.stack;
     delete response.errors;
     delete response.details;
-    
-    // Generic messages for production
+
+    // Generic message for server errors
     if (statusCode >= 500) {
       response.message = 'Internal server error';
     }
@@ -70,77 +68,52 @@ export const errorHandler = (err, req, res, next) => {
   return res.status(statusCode).json(response);
 };
 
-// Custom Error Classes with environment-aware messages
+// Custom Error Classes
 export class ValidationError extends Error {
-  constructor(
-    devMessage = 'Invalid input', 
-    prodMessage = 'Invalid request',
-    details = []
-  ) {
-    super(devMessage);
+  constructor(message = 'Invalid input', details = []) {
+    super(message);
     this.name = 'ValidationError';
-    this.prodMessage = prodMessage;
     this.details = details;
     this.statusCode = 400;
   }
 }
 
 export class ConflictError extends Error {
-  constructor(
-    devMessage = 'Resource already exists', 
-    prodMessage = 'Resource conflict occurred'
-  ) {
-    super(devMessage);
+  constructor(message = 'Resource conflict occurred') {
+    super(message);
     this.name = 'ConflictError';
-    this.prodMessage = prodMessage;
     this.statusCode = 409;
   }
 }
 
 export class UnauthorizedError extends Error {
-  constructor(
-    devMessage = 'Authentication required', 
-    prodMessage = 'Invalid credentials'
-  ) {
-    super(devMessage);
+  constructor(message = 'Invalid credentials') {
+    super(message);
     this.name = 'UnauthorizedError';
-    this.prodMessage = prodMessage;
     this.statusCode = 401;
   }
 }
 
 export class ForbiddenError extends Error {
-  constructor(
-    devMessage = 'Insufficient permissions', 
-    prodMessage = 'Access denied'
-  ) {
-    super(devMessage);
+  constructor(message = 'Access denied') {
+    super(message);
     this.name = 'ForbiddenError';
-    this.prodMessage = prodMessage;
     this.statusCode = 403;
   }
 }
 
 export class NotFoundError extends Error {
-  constructor(
-    devMessage = 'Resource not found', 
-    prodMessage = 'Resource not found'
-  ) {
-    super(devMessage);
+  constructor(message = 'Resource not found') {
+    super(message);
     this.name = 'NotFoundError';
-    this.prodMessage = prodMessage;
     this.statusCode = 404;
   }
 }
 
 export class InternalServerError extends Error {
-  constructor(
-    devMessage = 'Internal server error', 
-    prodMessage = 'Internal server error'
-  ) {
-    super(devMessage);
+  constructor(message = 'Internal server error') {
+    super(message);
     this.name = 'InternalServerError';
-    this.prodMessage = prodMessage;
     this.statusCode = 500;
   }
 }

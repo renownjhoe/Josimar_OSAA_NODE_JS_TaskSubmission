@@ -1,6 +1,5 @@
 import bcrypt from 'bcryptjs';
 import { OTP } from '../models/OTP.js';
-import twilio from 'twilio';
 import {
   ValidationError,
   InternalServerError
@@ -8,6 +7,7 @@ import {
 import { sendWhatsAppToken } from './whatsapppService.js';
 import { sendTelegramOtp } from './telegramService.js';
 import { generateOTP } from '../utils/generateOtp.js';
+import logger from '../utils/logger.js';
 
 export const sendOTP = async (user, channel) => {
   try {
@@ -25,13 +25,16 @@ export const sendOTP = async (user, channel) => {
       channel,
       expiresAt: new Date(Date.now() + 5 * 60 * 1000) // 5 minutes
     });
+
+    // Simulate OTP delivery
     logger.info(`OTP created for ${user.phone} is ${rawOTP}`);
+    logger.info(`User registered: ${user.username} (${user._id})`);
 
     // Send via selected channel whatsapp | telegram
     if (channel === 'whatsapp') {
-        await sendWhatsAppToken(user.phone, rawOTP);
+        // await sendWhatsAppToken(user.phone, rawOTP);
     } else if (channel === 'telegram') {
-      await sendTelegramOtp(user, rawOTP);
+      // await sendTelegramOtp(user, rawOTP);
     }
     logger.info(`OTP sent via ${channel} to ${user.phone}`);
     return true;
